@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #12141d;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="600" height="600"></canvas>
+  <script type="text/javascript">
+    const canvas = document.getElementById('canvas')
+    const ctx = canvas.getContext('2d')
+    const width = canvas.width
+    const height = canvas.height
+    const bs = 15
+    let s = 0
+    const wib = width / bs
+    const hib = height / bs
+    const dirs = {
+      37: 'left',
+      38: 'up',
+      39: 'right',
+      40: 'down'
+    }
+    const db = () => {
+      ctx.fillStyle = 'grey'
+      ctx.fillRect(0, 0, width, height)
+      ctx.fillStyle = 'lightgrey'
+      ctx.fillRect(bs, bs, width - bs * 2, height - bs * 2)
+    }
+    const dt = (t, ts, ta, tbl, x, y) => {
+      ctx.font = `${ts}px Courier`
+      ctx.fillStyle = 'black'
+      ctx.textAlign = ta
+      ctx.textBaseline = tbl
+      ctx.fillText(t, x, y)
+    }
+    const Block = function(c, r) {
+      this.c = c
+      this.r = r
+    }
+    Block.prototype.ds = function(col) {
+      ctx.fillStyle = col
+      ctx.fillRect(this.c * bs, this.r * bs, bs, bs)
+      ctx.strokeStyle = 'lightgrey'
+      ctx.strokeRect(this.c * bs, this.r * bs, bs, bs)
+    }
+    Block.prototype.dc = function(col) {
+      const r = bs / 2
+      ctx.fillStyle = col
+      ctx.beginPath()
+      ctx.arc(this.c * bs + r, this.r * bs + r, r, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    Block.prototype.eq = function(b) {
+      return this.c === b.c && this.r === b.r
+    }
+    const Snake = function() {
+      this.segs = [
+        new Block(7, 5),
+        new Block(6, 5),
+        new Block(5, 5)
+      ]
+      this.dir = 'right'
+      this.ndir = 'right'
+    }
+    Snake.prototype.dw = function() {
+      this.segs.forEach(seg => seg.ds('blue'))
+    }
+    Snake.prototype.chk = function(h) {
+      const wchk = h.c === 0 || h.r === 0 || h.c === wib - 1 || h.r === hib - 1
+      let schk = false
+      this.segs.forEach(seg => h.eq(seg) ? schk = true : null)
+      return wchk || schk
+    }
+    Snake.prototype.mv = function() {
+      const h = this.segs[0]
+      let nh
+      this.dir = this.ndir
+      this.dir === 'left' ? nh = new Block(h.c - 1, h.r) :
+      this.dir === 'up' ? nh = new Block(h.c, h.r - 1) :
+      this.dir === 'right' ? nh = new Block(h.c + 1, h.r) :
+      this.dir === 'down' ? nh = new Block(h.c, h.r + 1) : null
+      if (this.chk(nh)) {
+        clearInterval(intid)
+        dt('Конец игры!', 80, 'center', 'middle', width / 2, height / 2)
+        return
+      }
+      this.segs.unshift(nh)
+      if (nh.eq(apple.p)) {
+        s++
+        apple.mv()
+      } else this.segs.pop()
+    }
+    Snake.prototype.setdir = function(newdir) {
+      if (this.dir === 'left' && newdir === 'right') return
+      if (this.dir === 'right' && newdir === 'left') return
+      if (this.dir === 'up' && newdir === 'down') return
+      if (this.dir === 'down' && newdir === 'up') return
+      this.ndir = newdir
+    }
+    const Apple = function() {
+      this.p = new Block(10, 10)
+    }
+    Apple.prototype.dw = function() {
+      this.p.dc('tomato')
+    }
+    Apple.prototype.mv = function() {
+      const rc = Math.floor(Math.random() * (wib - 2)) + 1
+      const rr = Math.floor(Math.random() * (hib - 2)) + 1
+      this.p = new Block(rc, rr)
+    }
+    document.addEventListener('keydown', e => {
+      const newdir = dirs[e.keyCode]
+      newdir !== undefined ? snake.setdir(newdir) : null
+    })
+    let snake = new Snake()
+    let apple = new Apple()
+    const intid = setInterval(() => {
+      db()
+      dt(`Счёт: ${s}`, 30, 'left', 'top', bs, bs)
+      snake.mv()
+      snake.dw()
+      apple.dw()
+    }, 70)
+  </script>
+</body>
+</html>
